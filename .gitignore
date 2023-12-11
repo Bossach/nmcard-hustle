@@ -1,0 +1,9 @@
+build/
+build/*
+ppc-build/
+ppc-build/*
+*.o
+*.elf
+*.abs
+source/launcher/nmcard-hustle
+
