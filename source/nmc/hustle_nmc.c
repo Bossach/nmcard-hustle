@@ -4,21 +4,20 @@
 
 int main(int argc, char * argv[]){
 
+	float vals[3] = {-128.1, 0.9998, 100.9};
+
 	// fill banks
 	for (int i = 0; i < 192; ++i)
 	{
 
-		#define anum -99.3399
-		#define bnum 100
+		*((float*)(IMB2 + i)) = vals[i % 3];
+		*((float*)(IMB3 + i)) = vals[i % 3];
+		*((float*)(IMB4 + i)) = vals[i % 3];
 
-		*((float*)(IMB2 + i)) = anum + bnum * (i % 3);
-		*((float*)(IMB3 + i)) = anum + bnum * (i % 3);
-		*((float*)(IMB4 + i)) = anum + bnum * (i % 3);
-
-		*((float*)(IMB5 + i)) = anum + bnum * (i % 3);
-		*((float*)(IMB6 + i)) = anum + bnum * (i % 3);
-		*((float*)(IMB7 + i)) = anum + bnum * (i % 3);
-		// 1.37
+		*((float*)(IMB5 + i)) = vals[i % 3];
+		*((float*)(IMB6 + i)) = vals[i % 3];
+		*((float*)(IMB7 + i)) = vals[i % 3];
+		// 1.31
 
 	}
 
