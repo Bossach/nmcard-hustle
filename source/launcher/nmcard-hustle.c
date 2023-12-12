@@ -25,7 +25,6 @@
 
 
 
-
 #ifndef NMC_BIN
 #define NMC_BIN "nmc/hustle_nmc.abs"
 #endif
@@ -100,7 +99,7 @@ int help_message(int retValue);
 
 int parse_int(char * str, int * result);
 int find_arg(char * arg_str);
-int parse_args(int argc, char * argv[]);
+void parse_args(int argc, char * argv[]);
 
 void signal_handler(int sig);
 void close_everything_and_exit(int ret);
@@ -119,19 +118,17 @@ typedef struct{
 } board_s;
 
 static board_s * boards;
-static int boardCount;
+static unsigned boardCount;
 
 
 
 
 int main(int argc, char * argv[]){
 
-
 	//parse args
 	parse_args(argc, argv);
 
 	DBG("DBG: In main\n");
-
 
 
 	struct sigaction act;
@@ -143,12 +140,12 @@ int main(int argc, char * argv[]){
 	sigaction(SIGQUIT, &act, NULL);
 
 	//board count
-	if (PL_GetBoardCount(&boardCount) != PL_OK) {
+	if(PL_GetBoardCount(&boardCount) != PL_OK){
 		fprintf(stderr, "ERROR: Failed get count of boards!\n");
 		close_everything_and_exit(RET_NO_BOARDS);
 	}
 
-	if ( (boardCount < 1) || (board_index >= boardCount) ) {
+	if( (boardCount < 1) || (board_index >= boardCount) ){
 		fprintf(stderr, "ERROR: Failed find board!\n");
 		close_everything_and_exit(RET_NO_BOARDS);
 	}
@@ -161,31 +158,28 @@ int main(int argc, char * argv[]){
 
 	//cycle init board(s)
 	for(int b = 0; b < boardCount; b++){
-		if(all_boards_in_use || (b == board_index) ){
+		if( all_boards_in_use || (b == board_index) ){
 			boards[b].status = STATUS_USED;
 			DBG("DBG:Board %d used\n", b);
 
-				if (PL_GetBoardDesc(b, &boards[b].board) != PL_OK) {
+				if(PL_GetBoardDesc(b, &boards[b].board) != PL_OK){
 					fprintf(stderr, "ERROR: Failed open board %d!\n", b);
 					close_everything_and_exit(RET_BOARD_FAIL);
 				}
 
-				if (PL_ResetBoard(boards[b].board) != PL_OK) {
+				if(PL_ResetBoard(boards[b].board) != PL_OK){
 					fprintf(stderr, "ERROR: Failed reset board %d!\n", b);
 					close_everything_and_exit(RET_BOARD_FAIL);
 				} else {
 					DBG("DBG:Board %d reseted\n", b);
-
 				}
 
-				if (PL_LoadInitCode(boards[b].board) != PL_OK) {
+				if(PL_LoadInitCode(boards[b].board) != PL_OK){
 					fprintf(stderr, "ERROR: Failed load init code board %d!\n", b);
 					close_everything_and_exit(RET_BOARD_FAIL);
 				} else {
 					DBG("DBG:Board %d inited\n", b);
 				}
-
-
 
 		} else {
 			DBG("DBG:Board %d not used\n", b);
@@ -201,8 +195,9 @@ int main(int argc, char * argv[]){
 		close_everything_and_exit(RET_SUCCESS);
 	}
 
-	if(signal_is_catched_flag)
+	if(signal_is_catched_flag){
 		close_everything_and_exit(RET_SIGNAL_EXIT);
+	}
 
 	printf("[Launching hustle]...\n");
 
@@ -216,20 +211,20 @@ int main(int argc, char * argv[]){
 		//cycle nms
 		for(int i = 0; i < 16; i++){
 
-			if(signal_is_catched_flag)
+			if(signal_is_catched_flag){
 				close_everything_and_exit(RET_SIGNAL_EXIT);
+			}
 
-
+			//nmc get access & load programs
 			boards[b].nm[i].core.cluster_id = i / 4;
 			boards[b].nm[i].core.nm_id = i % 4;
 
-			if (PL_GetAccess(boards[b].board, &boards[b].nm[i].core, &boards[b].nm[i].access) != PL_OK) {
+			if(PL_GetAccess(boards[b].board, &boards[b].nm[i].core, &boards[b].nm[i].access) != PL_OK){
 				fprintf(stderr, "ERROR: Board %d [%d.%d]: Failed get access!\n", b, boards[b].nm[i].core.cluster_id, boards[b].nm[i].core.nm_id);
 				close_everything_and_exit(RET_ACCESS_FAIL);
 			}
 
-
-			if (PL_LoadProgramFile(boards[b].nm[i].access, NMC_BIN) != PL_OK) {
+			if(PL_LoadProgramFile(boards[b].nm[i].access, NMC_BIN) != PL_OK){
 				fprintf(stderr, "ERROR board %d [%d.%d]: Failed load program '%s'\n", b, boards[b].nm[i].core.cluster_id, boards[b].nm[i].core.nm_id, NMC_BIN);
 				close_everything_and_exit(RET_LOAD_PROGRAM_FAIL);
 			} else {
@@ -238,25 +233,23 @@ int main(int argc, char * argv[]){
 
 		}
 
-
-
 		//cycle arms
 		for(int i = 0; i < 4; i++){
 			
-			if(signal_is_catched_flag)
+			if(signal_is_catched_flag){
 				close_everything_and_exit(RET_SIGNAL_EXIT);
+			}
 
 			//cluster get access & load programs
 			boards[b].cluster[i].core.cluster_id = i;
 			boards[b].cluster[i].core.nm_id = -1;
 
-			if (PL_GetAccess(boards[b].board, &boards[b].cluster[i].core, &boards[b].cluster[i].access) != PL_OK) {
+			if(PL_GetAccess(boards[b].board, &boards[b].cluster[i].core, &boards[b].cluster[i].access) != PL_OK){
 				fprintf(stderr, "ERROR: Board %d [%d.%d]: Failed get access!\n", b, boards[b].cluster[i].core.cluster_id, boards[b].cluster[i].core.nm_id);
 				close_everything_and_exit(RET_ACCESS_FAIL);
 			}
 
-
-			if (PL_LoadProgramFile(boards[b].cluster[i].access, ARM_BIN) != PL_OK) {
+			if(PL_LoadProgramFile(boards[b].cluster[i].access, ARM_BIN) != PL_OK){
 				fprintf(stderr, "ERROR board %d [%d.%d]: Failed load program '%s'\n", b, boards[b].cluster[i].core.cluster_id, boards[b].cluster[i].core.nm_id, ARM_BIN);
 				close_everything_and_exit(RET_LOAD_PROGRAM_FAIL);
 			} else {
@@ -266,19 +259,17 @@ int main(int argc, char * argv[]){
 
 		}
 
-
 		//central arm get access & load program
 		boards[b].central.core.cluster_id = -1;
 		boards[b].central.core.nm_id = -1;
 		boards[b].central.io = NULL;
 
-		if (PL_GetAccess(boards[b].board, &boards[b].central.core, &boards[b].central.access) != PL_OK) {
+		if(PL_GetAccess(boards[b].board, &boards[b].central.core, &boards[b].central.access) != PL_OK){
 			fprintf(stderr, "ERROR: Board %d [%d.%d]: Failed get access!\n", b, boards[b].central.core.cluster_id, boards[b].central.core.nm_id);
 			close_everything_and_exit(RET_ACCESS_FAIL);
 		}
 
-
-		if (PL_LoadProgramFile(boards[b].central.access, CARM_BIN) != PL_OK) {
+		if(PL_LoadProgramFile(boards[b].central.access, CARM_BIN) != PL_OK){
 			fprintf(stderr, "ERROR board %d [%d.%d]: Failed load program '%s'\n", b, boards[b].central.core.cluster_id, boards[b].central.core.nm_id, CARM_BIN);
 			close_everything_and_exit(RET_LOAD_PROGRAM_FAIL);
 		} else {
@@ -289,7 +280,7 @@ int main(int argc, char * argv[]){
 			int io_err = 0;
 			boards[b].central.io = IO_ServiceStart(boards[b].central.access, NULL, NULL, &io_err);
 
-			if (boards[b].central.io == NULL) {
+			if(boards[b].central.io == NULL){
 				fprintf(stderr, "ERROR board %d [%d.%d]: Failed create IO_Service: IO_err = %d\n", b, boards[b].central.core.cluster_id, boards[b].central.core.nm_id, io_err);
 				close_everything_and_exit(RET_IO_SERVICE_FAIL);
 			} else {
@@ -297,19 +288,19 @@ int main(int argc, char * argv[]){
 			}
 		}
 
-
-		if(signal_is_catched_flag)
+		if(signal_is_catched_flag){
 			close_everything_and_exit(RET_SIGNAL_EXIT);
+		}
 
 	}
 
 	DBG("DBG: ------ All cores loaded\n");
 
+
 	printf("[Launced]\n");
 
-	
 	if(wait_result){
-		if (timeout_seconds > 0){
+		if(timeout_seconds > 0){
 			sleep(timeout_seconds);
 			if(signal_is_catched_flag)
 				close_everything_and_exit(RET_SIGNAL_EXIT);
@@ -333,18 +324,15 @@ int main(int argc, char * argv[]){
 int help_message(int retValue){
 
 	putchar('\n');
-	for (int i = 0; i < args_total; i++)
-	{
+	for(int i = 0; i < args_total; i++){
 		printf("\t%s/%s %s\t: %s\n", arglist[i].shrt, arglist[i].lng, arglist[i].req_val?"[value]":"", arglist[i].help_str);
 	}
-
 	exit(retValue);
 }
 
 int find_arg(char * arg_str){
-	for (int i = 0; i < args_total; i++)
-	{
-		if ( (strcmp(arg_str, arglist[i].shrt) == 0) || (strcmp(arg_str, arglist[i].lng) == 0) ){
+	for(int i = 0; i < args_total; i++){
+		if( (strcmp(arg_str, arglist[i].shrt) == 0) || (strcmp(arg_str, arglist[i].lng) == 0) ){
 			return arglist[i].index;
 		}
 	}
@@ -353,10 +341,9 @@ int find_arg(char * arg_str){
 
 int parse_int(char * str, int * result){
 	int len = strlen(str);
-	if (len == 0) return -2;
+	if(len == 0)return -2;
 
-	for (int i = 0; i < len; ++i)
-	{
+	for(int i = 0; i < len; ++i){
 		if( (str[i] != '0') && 
 			(str[i] != '1') && (str[i] != '2') && (str[i] != '3') && 
 			(str[i] != '4') && (str[i] != '5') && (str[i] != '6') && 
@@ -369,13 +356,13 @@ int parse_int(char * str, int * result){
 	return 0;
 }
 
-int parse_args(int argc, char * argv[]){
+void parse_args(int argc, char * argv[]){
 
 	int arg_idx;
 	int int_value;
 
 
-	for (int arg_pos = 1; arg_pos < argc; arg_pos++){
+	for(int arg_pos = 1; arg_pos < argc; arg_pos++){
 
 		arg_idx = find_arg(argv[arg_pos]);
 
@@ -419,7 +406,7 @@ int parse_args(int argc, char * argv[]){
 				fprintf(stderr, "Invalid option value: %s\nMust be positive integer.\n\n", argv[arg_pos - 1]);
 				help_message(RET_WRONG_ARG);
 			}
-			if( parse_int(argv[arg_pos], &int_value) != 0 ){
+			if(parse_int(argv[arg_pos], &int_value) != 0){
 				fprintf(stderr, "Invalid optiov value: %s %s\nMust be positive integer.\n\n", argv[arg_pos - 1], argv[arg_pos]);
 				help_message(RET_WRONG_ARG);
 			}
@@ -463,38 +450,38 @@ void close_everything_and_exit(int ret){
 
 	DBG("DBG: Enter cleaning\n");
 
-	if ( boards == NULL ){
-
+	if(boards == NULL){
 		DBG("DBG: 'boards' is NULL\n");
-
 	} else {
 
-
-		for (int b = 0; b < boardCount; b++){
+		for(int b = 0; b < boardCount; b++){
 
 			// skip unused boards
-			if ( (boards[b].status == STATUS_NOT_USED) || (boards[b].status == STATUS_CLOSED) )
+			if( (boards[b].status == STATUS_NOT_USED) || (boards[b].status == STATUS_CLOSED) ){
 				continue;
+			}
 
 			// nm accesses
-			for (int i = 0; i < 16; ++i){
+			for(int i = 0; i < 16; ++i){
 				if (boards[b].nm[i].access)
 					PL_CloseAccess(boards[b].nm[i].access);
 			}
 
 			// cluster arm accessess
-			for (int i = 0; i < 4; ++i){
+			for(int i = 0; i < 4; ++i){
 				if (boards[b].cluster[i].access)
 					PL_CloseAccess(boards[b].cluster[i].access);
 			}
 
 			// central io
-			if(use_io && (boards[b].central.io != NULL) )
+			if(use_io && (boards[b].central.io != NULL) ){
 				IO_ServiceStop(&boards[b].central.io, NULL);
+			}
 
 			// central access
-			if (boards[b].central.access)
+			if(boards[b].central.access){
 				PL_CloseAccess(boards[b].central.access);
+			}
 			
 			// reset board
 			if(wait_result){
