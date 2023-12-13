@@ -14,8 +14,8 @@ export NMC_LLVM_PREFIX ?= llvm-nmc/bin/
 export BOARD ?= NM_CARD
 export BOARD_PATH ?= /usr/local/rc_module/board-nm_card/
 
-SRCDIR ?= ./source/
-BILDIR ?= ./build/
+export SRCDIR ?= ./source/
+export BILDIR ?= ./build/
 
 
 ########
@@ -86,6 +86,7 @@ clean:
 	$(MAKE) -C $(SRCDIR)nmc/ clean
 	$(MAKE) -C $(SRCDIR)cluster/ clean
 	$(MAKE) -C $(SRCDIR)central/ clean
+	$(MAKE) -C $(SRCDIR)arm_common/ clean
 	@echo [==== Cleaning done ====]
 
 .PHONY: clear-builddir
